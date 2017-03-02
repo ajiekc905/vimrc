@@ -24,8 +24,10 @@ set foldnestmax=1      "deepest fold is 10 levels
 set laststatus=2
 set statusline=%F
 set number relativenumber
+let g:netrw_liststyle = 3 " filetree mode for netrw
 map <F5> :set hlsearch!<CR>
 nnoremap <tab> <C-W>w
+set wildmode=list:longest 
 
 
   " Autoinstall
@@ -71,7 +73,7 @@ let g:ale_sign_warning = '⚠'
 Plug 'flowtype/vim-flow', { 'for': ['javascript', 'jsx'] }
 
 " autocomlpete using deoplete +
-if !has('nvim')
+if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 else
   Plug 'https://github.com/Shougo/neocomplete.vim'
