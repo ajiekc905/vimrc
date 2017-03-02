@@ -77,8 +77,11 @@ else
   Plug 'https://github.com/Shougo/neocomplete.vim'
 endif
 
+" git support
+Plug 'airblade/vim-gitgutter'
 
-
+" . command after a plugin map
+Plug 'https://github.com/tpope/vim-repeat'
 
 
 "let g:neomake_javascript_jshint_maker = {
@@ -244,7 +247,7 @@ nnoremap <leader>b :ls<cr>:b<space>
 
 " HJKL craziness
 nnoremap H ^
-nnoremap L $
+nnoremap L g_
 inoremap <expr> j ((pumvisible())?("\<C-n>"):("j"))
 inoremap <expr> k ((pumvisible())?("\<C-p>"):("k"))
 inoremap <expr> <tab> ((pumvisible())?("\<Cr>"):("<Cr>"))
