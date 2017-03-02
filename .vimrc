@@ -72,7 +72,7 @@ Plug 'flowtype/vim-flow', { 'for': ['javascript', 'jsx'] }
 
 " autocomlpete using deoplete +
 if !has('nvim')
-  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins'
+  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 else
   Plug 'https://github.com/Shougo/neocomplete.vim'
 endif
