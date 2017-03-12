@@ -1,3 +1,4 @@
+"set t_Co=256
 set lazyredraw
 set smarttab  "Improves tabbing
 set mouse=a
@@ -13,14 +14,22 @@ set showcmd
 set foldmethod=manual   "fold based on indent
 set foldnestmax=1      "deepest fold is 10 levels
 set laststatus=2
-set statusline=%F
 set number relativenumber
+set backspace=indent,eol,start
 let g:netrw_list_hide= netrw_gitignore#Hide()" Hide files listed in gitignore
 "let g:netrw_liststyle = 3 " filetree mode for netrw
 map <F5> :set hlsearch!<CR>
 nnoremap <tab> <C-W>w
 "set wildmode=list:longest 
 set guifont=Source\ Code\ Pro\ Light:h18 " font for Macvim
+" use gui colors instead term ones ?? 
+" https://www.reddit.com/r/vim/comments/2ozwe4/24_bit_vim_in_osx_iterm2_a_reality/     ????
+" The "^[" is a single character. You enter it by pressing Ctrl+v and then ESC.
+" https://www.linuxquestions.org/questions/slackware-14/tip-24-bit-true-color-terminal-tmux-vim-4175582631/
+set t_8f=[38;2;%lu;%lu;%lum
+set t_8b=[48;2;%lu;%lu;%lum
+
+
 
 
   " Autoinstall
@@ -42,18 +51,66 @@ call plug#begin('~/.vim/plugged')
 " Rainbow parenthesis. Need some config to work
   Plug 'luochen1990/rainbow'
   let g:rainbow_active = 1
-
-
   " GUI and related stuff
-  " a new start screen +
-  "Plug 'mhinz/vim-startify'
-  " a statusline +
-  Plug 'vim-airline/vim-airline'
-  let g:airline_powerline_fonts = 1
+  " statusline haks
+  set statusline=
+  set statusline+=[%n]                                  "buffernr
+  set statusline+=%#error#
+  set statusline+=%m                                  "modified
+  set statusline+=%r                                  "read only
+  set statusline+=%*
+  set statusline+=%t:%l                               "File
+  set statusline+=%=\ 
+  set statusline+=col:%c\                            "Colnr
+
+" cursor color mode
+" mode aware cursors gui only https://github.com/blaenk/dots/blob/9843177fa6155e843eb9e84225f458cd0205c969/vim/vimrc.ln#L49-L64
+  set gcr=a:block
+  set gcr+=o:hor50-Cursor
+  set gcr+=n:Cursor
+  set gcr+=i-ci-sm:InsertCursor
+  set gcr+=r-cr:ReplaceCursor-hor20
+  set gcr+=c:CommandCursor
+  set gcr+=v-ve:VisualCursor
+  set gcr+=a:blinkon0
+
+" the same cursor shape in nvim and vim under urxvt, st, xterm, gnome-terminal`
+" 0  -> blinking block.
+" 1  -> blinking block (default).
+" 2  -> steady block.
+" 3  -> blinking underline.
+" 4  -> steady underline.
+" 5  -> blinking bar (xterm).
+" 6  -> steady bar (xterm).
+"http://ass.kameli.org/cursor_tricks.html
+if exists('$ITERM_SESSION_ID') && !exists('$TMUX')
+    let &t_SI = "\<Esc>]50;CursorShape=1\x7"
+    let &t_EI = "\<Esc>]50;CursorShape=0\x7"
+else
+    let &t_SI = "\<Esc>[6 q"
+    let &t_SR = "\<Esc>[4 q"
+    let &t_EI = "\<Esc>[2 q"
+end
+" http://vim.wikia.com/wiki/Configuring_the_cursor
+if &term =~ "xterm\\|rxvt"
+  " use an orange cursor in insert mode
+  let &t_SI = "\<Esc>]12;orange\x7"
+  " use a red cursor otherwise
+  let &t_EI = "\<Esc>]12;red\x7"
+  silent !echo -ne "\033]12;red\007"
+  " reset cursor when vim exits
+  autocmd VimLeave * silent !echo -ne "\033]112\007"
+  " use \003]12;gray\007 for gnome-terminal
+endif
+
+
+
+
+
 
 
 "indenter for standalone and embedded JavaScript and TypeScript.
-Plug 'jason0x43/vim-js-indent'
+" Plug 'jason0x43/vim-js-indent'
 "Plug 'https://github.com/ciaranm/detectindent'
 
 " todo in the code
@@ -78,19 +135,83 @@ let g:ale_linters = {
 
 "Plug 'flowtype/vim-flow', { 'for': ['javascript', 'jsx'] }
 
+Plug 'honza/vim-snippets'
 " autocomlpete using deoplete +
 if has('nvim')
+  let $NVIM_TUI_ENABLE_TRUE_COLOR=1
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+  let g:deoplete#enable_ignore_case=1
+  let g:deoplete#enable_smart_case=1
+
   Plug 'carlitux/deoplete-ternjs', { 'do': 'npm install -g tern' }
 else
   Plug 'https://github.com/Shougo/neocomplete.vim'
 endif
+Plug 'Shougo/neosnippet'
+Plug 'Shougo/neosnippet-snippets'
+  " Enable snipMate compatibility feature.
+" let g:neosnippet#enable_snipmate_compatibility = 1
+" " Tell Neosnippet about the other snippets
+" let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
+smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
+\ "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+
+" deoplete.vim
+set omnifunc=syntaxcomplete#Complete
+let g:deoplete#enable_at_startup = 1
+set completeopt+=noinsert
+let g:deoplete#enable_ignore_case = 'ignorecase'
+" https://github.com/Shougo/neocomplete.vim/blob/master/autoload/neocomplete/sources/omni.vim
+let g:deoplete#omni_patterns = {}
+let g:deoplete#omni_patterns.html = '<[^>]*'
+let g:deoplete#omni_patterns.xml  = '<[^>]*'
+let g:deoplete#omni_patterns.md   = '<[^>]*'
+let g:deoplete#omni_patterns.css   = '^\s\+\w\+\|\w\+[):;]\?\s\+\w*\|[@!]'
+let g:deoplete#omni_patterns.scss   = '^\s\+\w\+\|\w\+[):;]\?\s\+\w*\|[@!]'
+let g:deoplete#omni_patterns.sass   = '^\s\+\w\+\|\w\+[):;]\?\s\+\w*\|[@!]'
+let g:deoplete#omni_patterns.javascript = '[^. \t]\.\%(\h\w*\)\?'
+let g:deoplete#omni_patterns.c = '[^.[:digit:] *\t]\%(\.\|->\)\w*'
+let g:deoplete#omni_patterns.cpp = '[^.[:digit:] *\t]\%(\.\|->\)\w*\|\h\w*::\w*'
+let g:deoplete#omni_patterns.go = '[^.[:digit:] *\t]\.\w*'
+let g:deoplete#omni_patterns.ruby = ['[^. *\t]\.\w*', '\h\w*::']
+" let g:deoplete#omni_patterns.python = '[^. \t]\.\w*'
+let g:deoplete#omni_patterns.python = ['[^. *\t]\.\h\w*\','\h\w*::']
+let g:deoplete#omni_patterns.python3 = ['[^. *\t]\.\h\w*\','\h\w*::']
+autocmd CmdwinEnter * let b:deoplete_sources = ['buffer']
+
+
+
+
+" It has "file/include" source and extends tag sources in neocomplete/deoplete. ??
+Plug 'https://github.com/Shougo/neoinclude.vim'
+Plug 'ternjs/tern_for_vim', { 'for': ['javascript', 'javascript.jsx'] }
+Plug 'othree/jspc.vim', { 'for': ['javascript', 'javascript.jsx'] }
+
+  " snippets support
+  " https://www.gregjs.com/vim/2016/neovim-deoplete-jspc-ultisnips-and-tern-a-config-for-kickass-autocompletion/
+  " Plug 'SirVer/ultisnips'
+  " let g:deoplete#omni#functions = {}
+  " let g:deoplete#omni#functions.javascript = [
+  "       \ 'tern#Complete',
+  "       \ 'jspc#omni'
+  "       \]
+  " set completeopt=longest,menuone,preview
+  " let g:deoplete#sources = {}
+  " let g:deoplete#sources['javascript.jsx'] = ['file', 'neosnippet', 'ternjs']
+  " let g:tern#command = ['tern']
+  " let g:tern#arguments = ['--persistent']
+
+
+
+
 
 " git support
 Plug 'airblade/vim-gitgutter'
 nnoremap <!> :GitGutterLineHighlightsToggle
 " git interaction tool
 Plug 'tpope/vim-fugitive'
+" async git support
+Plug 'https://github.com/lambdalisue/gina.vim'
 
 
 " . command after a plugin map +
@@ -103,6 +224,12 @@ map <F3> :e .<CR>
 
 " nerd commenter +
 Plug 'scrooloose/nerdcommenter'
+Plug 'tpope/vim-commentary'
+" gc to comment out the target of a motion (for example, gcap to comment out a paragraph), 
+" gc in visual mode to comment out the selection, 
+" gc in operator pending mode to target a comment
+
+
 " tagbar (functions, methods etc)
 Plug 'majutsushi/tagbar'
 nmap <F8> :TagbarToggle<CR>
@@ -111,6 +238,9 @@ nmap <F8> :TagbarToggle<CR>
 Plug 'szw/vim-ctrlspace'
 set hidden
 nmap <F4> :CtrlSpace<CR>
+
+"a file finder with fuzzy alg
+Plug 'ctrlpvim/ctrlp.vim'
 
   " Underlines the word under the cursor +
   Plug 'https://github.com/itchyny/vim-cursorword'
@@ -138,46 +268,38 @@ nmap <F4> :CtrlSpace<CR>
   "		  :BookmarkLoad <FILE_PATH>
 
 " Tab for autocomplete +
-Plug 'ervandew/supertab'
-    let g:SuperTabDefaultCompletionType = "<c-n>"
+" Plug 'ervandew/supertab'
+"     let g:SuperTabDefaultCompletionType = "<c-n>"
 
-
-" It has "file/include" source and extends tag sources in neocomplete/deoplete. ??
-Plug 'https://github.com/Shougo/neoinclude.vim'
-
-  " snippets support
-  " https://www.gregjs.com/vim/2016/neovim-deoplete-jspc-ultisnips-and-tern-a-config-for-kickass-autocompletion/
-  Plug 'SirVer/ultisnips'
-  Plug 'honza/vim-snippets'
-  Plug 'ternjs/tern_for_vim', { 'for': ['javascript', 'javascript.jsx'] }
-  Plug 'othree/jspc.vim', { 'for': ['javascript', 'javascript.jsx'] }
-  let g:deoplete#omni#functions = {}
-  let g:deoplete#omni#functions.javascript = [
-        \ 'tern#Complete',
-        \ 'jspc#omni'
-        \]
-  set completeopt=longest,menuone,preview
-  let g:deoplete#sources = {}
-  let g:deoplete#sources['javascript.jsx'] = ['file', 'ultisnips', 'ternjs']
-  let g:tern#command = ['tern']
-  let g:tern#arguments = ['--persistent']
 
 
 " to enable opening a file in a given line. vim index.html:20
-Plug 'bogado/file-line'
+" Plug 'bogado/file-line'
 
   " Selections (visual mode)
-  "Quickly identyfying and selecting pairs of brackets or htmx /xml tags
-  Plug 'https://github.com/gorkunov/smartpairs.vim.git'
+  "Quickly selecting pairs of brackets or htmx /xml tags
+  " vv as usual keybinding
+" vi* -> viv
+" va* -> vav
+" ci* -> civ
+" ca* -> cav
+" di* -> div
+" da* -> dav
+" yi* -> yiv
+" ya* -> yav
+" Where * is in <, >, ", ', `, (, ), [, ], {, } or t as tag
+  " Plug 'https://github.com/gorkunov/smartpairs.vim.git'
   " quickly select the closest text object  +
-  Plug 'https://github.com/gcmt/wildfire.vim'
+  " Plug 'https://github.com/gcmt/wildfire.vim'
   " Press <ENTER> in normal mode to select the closest text object.
 
-" some teretically useful keys remappings ???
-Plug 'https://github.com/tpope/vim-unimpaired'
+" some teoretically useful keys remappings 
+" Plug 'https://github.com/tpope/vim-unimpaired'
 
-" Emmet style for html? ??
-Plug 'mattn/emmet-vim'
+
+" indented lines as a text object
+Plug 'michaeljsmith/vim-indent-object'
+
 
   "Format code with one button press.
   Plug 'Chiel92/vim-autoformat'
@@ -191,24 +313,32 @@ Plug 'mattn/emmet-vim'
   "let g:formatdef_fmt_custom_xml = '"tidy -xml -q --show-errors 0 --show-warnings 0 --indent-attributes 1"'
   "let g:formatters_xml = ['fmt_custom_xml']
 
+" Emmet style for html? ??
+Plug 'mattn/emmet-vim'
 
 Plug 'NLKNguyen/papercolor-theme'
-
+Plug 'https://github.com/morhetz/gruvbox'
 
 " Initialize Plugin system
 call plug#end()
 
 syntax enable
-set t_Co=256
-colorscheme PaperColor
+"colorscheme PaperColor
+colorscheme gruvbox
+
+let g:gruvbox_contrast_light='soft'
+"Possible values are soft, medium and hard.
+
+" Makes the background transparent. Leave these out if you're not using a transparent
+" terminal.
+"highlight Normal ctermbg=NONE guibg=NONE
+"highlight NonText ctermbg=NONE guibg=NONE
+
+" This is what sets vim to use 24-bit colors. It will also work for any version of neovim
+" newer than 0.1.4.
+set termguicolors
 
 
-"let g:airline#extensions#tabline#enabled = 1
-
-" -------- character motions
-" Trigger a highlight in the appropriate direction when pressing these keys:
-let g:qs_highlight_on_keys = ['f', 'F', 't', 'T']
-" -------------------
 
 
 let g:rainbow_conf = {
@@ -218,30 +348,17 @@ let g:rainbow_conf = {
     \   'parentheses': ['start=/(/ end=/)/ fold', 'start=/\[/ end=/\]/ fold', 'start=/{/ end=/}/ fold'],
     \   'separately': {
     \       '*': {},
-    \       'tex': {
-    \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
-    \       },
-    \       'lisp': {
-    \           'guifgs': ['royalblue3', 'darkorange3', 'seagreen3', 'firebrick', 'darkorchid3'],
-    \       },
-    \       'sh': {
-    \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
-    \       },
     \       'js': {
     \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
     \       },
     \       'vim': {
     \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/', 'start=/{/ end=/}/ fold', 'start=/(/ end=/)/ containedin=vimFuncBody', 'start=/\[/ end=/\]/ containedin=vimFuncBody', 'start=/{/ end=/}/ fold containedin=vimFuncBody'],
     \       },
-    \       'html': {
-    \           'parentheses': ['start=/\v\<((area|base|br|col|embed|hr|img|input|keygen|link|menuitem|meta|param|source|track|wbr)[ >])@!\z([-_:a-zA-Z0-9]+)(\s+[-_:a-zA-Z0-9]+(\=("[^"]*"|'."'".'[^'."'".']*'."'".'|[^ '."'".'"><=`]*))?)*\>/ end=#</\z1># fold'],
+    \       'sh': {
+    \           'parentheses': ['start=/(/ end=/)/', 'start=/\[/ end=/\]/'],
     \       },
-    \       'css': 0,
     \   }
     \}
-
-" Send more characters to the terminal at once.
-" Makes things smoother, will probably be enabled by my terminal anyway.
 
 let g:deoplete#enable_at_startup = 1
 set nobackup
@@ -260,6 +377,7 @@ filetype plugin indent on
 " HJKL craziness
 nnoremap H ^
 nnoremap L g_
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 inoremap <expr> j ((pumvisible())?("\<C-n>"):("j"))
 inoremap <expr> k ((pumvisible())?("\<C-p>"):("k"))
 inoremap <expr> <tab> ((pumvisible())?("\<Cr>"):("<Cr>"))
@@ -268,9 +386,21 @@ nnoremap K :tabnext<CR>
 
 
 
-nmap :я :q
+nmap я q
 nmap ЯЯ :q!
-nmap :шя :wq
+nmap шя wq
 nmap и i
 nmap п p
 nmap в v
+
+
+
+
+
+
+
+
+hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
+hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
+hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
+hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
