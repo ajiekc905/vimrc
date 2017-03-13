@@ -1,22 +1,29 @@
-"set t_Co=256
 set lazyredraw
 set smarttab  "Improves tabbing
 set mouse=a
 set shiftwidth=2 softtabstop=2 tabstop=2 expandtab
 set incsearch
 set hlsearch
+set path+=**
 set wildignore=*/node_modules/*
 set wildmenu
 set smartindent
 set number  "Enables line numbering
-set showcmd
-"let loaded_matchparen = 1 " to turn off match parenthesis
+"set showcmd
+let loaded_matchparen = 1 " to turn off match parenthesis
 set foldmethod=manual   "fold based on indent
 set foldnestmax=1      "deepest fold is 10 levels
 set laststatus=2
 set number relativenumber
 set backspace=indent,eol,start
 let g:netrw_list_hide= netrw_gitignore#Hide()" Hide files listed in gitignore
+let g:netrw_list_hide.=',\(^\|\s\s\)\zs\.\S\+'
+set fillchars=vert:│                  " Vertical sep between windows (unicode)
+set textwidth=80
+" the line will be right after column 80, &tw+3
+set colorcolumn=+3
+
+
 "let g:netrw_liststyle = 3 " filetree mode for netrw
 map <F5> :set hlsearch!<CR>
 nnoremap <tab> <C-W>w
@@ -26,8 +33,7 @@ set guifont=Source\ Code\ Pro\ Light:h18 " font for Macvim
 " https://www.reddit.com/r/vim/comments/2ozwe4/24_bit_vim_in_osx_iterm2_a_reality/     ????
 " The "^[" is a single character. You enter it by pressing Ctrl+v and then ESC.
 " https://www.linuxquestions.org/questions/slackware-14/tip-24-bit-true-color-terminal-tmux-vim-4175582631/
-set t_8f=[38;2;%lu;%lu;%lum
-set t_8b=[48;2;%lu;%lu;%lum
+
 
 
 
@@ -43,10 +49,10 @@ call plug#begin('~/.vim/plugged')
   " Syntax & coloring
   Plug 'https://github.com/othree/javascript-libraries-syntax.vim', { 'for': ['javascript', 'jsx'] }
   Plug 'https://github.com/sheerun/vim-polyglot'
-  Plug 'https://github.com/kchmck/vim-coffee-script.git'
-  Plug 'https://github.com/lchi/vim-coffee-script.git'
+  "Plug 'https://github.com/kchmck/vim-coffee-script.git'
+  "Plug 'https://github.com/lchi/vim-coffee-script.git'
 
-	Plug 'bigfish/vim-js-context-coloring', { 'do': 'npm install --update' }" Context coloring (functions / variables
+	"Plug 'bigfish/vim-js-context-coloring', { 'do': 'npm install --update' }" Context coloring (functions / variables
 
 " Rainbow parenthesis. Need some config to work
   Plug 'luochen1990/rainbow'
@@ -54,14 +60,28 @@ call plug#begin('~/.vim/plugged')
   " GUI and related stuff
   " statusline haks
   set statusline=
-  set statusline+=[%n]                                  "buffernr
   set statusline+=%#error#
   set statusline+=%m                                  "modified
   set statusline+=%r                                  "read only
   set statusline+=%*
-  set statusline+=%t:%l                               "File
+  set statusline+=[%n]                                  "buffernr
+  "display a warning if fileformat isnt unix
+  set statusline+=%#warningmsg#
+  set statusline+=%{&ff!='unix'?'['.&ff.']':''}
+  set statusline+=%*
+
+  "display a warning if file encoding isnt utf-8
+  set statusline+=%#warningmsg#
+  set statusline+=%{(&fenc!='utf-8'&&&fenc!='')?'['.&fenc.']':''}
+  set statusline+=%*
+
+  set statusline+=%t
+  set statusline+=:%l
+  
   set statusline+=%=\ 
-  set statusline+=col:%c\                            "Colnr
+  set statusline+=%{fugitive#statusline()}
+  set statusline+=c:%c\                            "Colnr
+  set statusline+=%y
 
 " cursor color mode
 " mode aware cursors gui only https://github.com/blaenk/dots/blob/9843177fa6155e843eb9e84225f458cd0205c969/vim/vimrc.ln#L49-L64
@@ -74,15 +94,8 @@ call plug#begin('~/.vim/plugged')
   set gcr+=v-ve:VisualCursor
   set gcr+=a:blinkon0
 
-" the same cursor shape in nvim and vim under urxvt, st, xterm, gnome-terminal`
-" 0  -> blinking block.
-" 1  -> blinking block (default).
-" 2  -> steady block.
-" 3  -> blinking underline.
-" 4  -> steady underline.
-" 5  -> blinking bar (xterm).
-" 6  -> steady bar (xterm).
-"http://ass.kameli.org/cursor_tricks.html
+" " the same cursor shape in nvim and vim under urxvt, st, xterm, gnome-terminal`
+" "http://ass.kameli.org/cursor_tricks.html
 if exists('$ITERM_SESSION_ID') && !exists('$TMUX')
     let &t_SI = "\<Esc>]50;CursorShape=1\x7"
     let &t_EI = "\<Esc>]50;CursorShape=0\x7"
@@ -91,33 +104,42 @@ else
     let &t_SR = "\<Esc>[4 q"
     let &t_EI = "\<Esc>[2 q"
 end
-" http://vim.wikia.com/wiki/Configuring_the_cursor
-if &term =~ "xterm\\|rxvt"
-  " use an orange cursor in insert mode
-  let &t_SI = "\<Esc>]12;orange\x7"
-  " use a red cursor otherwise
-  let &t_EI = "\<Esc>]12;red\x7"
-  silent !echo -ne "\033]12;red\007"
-  " reset cursor when vim exits
-  autocmd VimLeave * silent !echo -ne "\033]112\007"
-  " use \003]12;gray\007 for gnome-terminal
-endif
+"" http://vim.wikia.com/wiki/Configuring_the_cursor
+"if &term =~ "xterm\\|rxvt"
+  "" use an orange cursor in insert mode
+  "let &t_SI = "\<Esc>]12;orange\x7"
+  "" use a red cursor otherwise
+  "let &t_EI = "\<Esc>]12;red\x7"
+  "silent !echo -ne "\033]12;red\007"
+  "" reset cursor when vim exits
+  "autocmd VimLeave * silent !echo -ne "\033]112\007"
+  "" use \003]12;gray\007 for gnome-terminal
+"endif
 
 
+" makes it easier to find and replace text through multiple files. It's inspired by fancy IDEs, like IntelliJ and Eclipse, that provide cozy tools for such tasks.
+"Plug 'brooth/far.vim'
+" coverage indication for wallaby test framework
+"Plug 'ruanyl/coverage.vim'
 
-
-
-
-
+" interactive programmers calculator :Codi  ; Codi!! [filetype] toggles Codi for the current buffer
+"Plug 'metakirby5/codi.vim'
 "indenter for standalone and embedded JavaScript and TypeScript.
 " Plug 'jason0x43/vim-js-indent'
-"Plug 'https://github.com/ciaranm/detectindent'
 
 " todo in the code
 Plug 'https://github.com/Dimercel/todo-vim', { 'on': 'TODOToggle' }
 nmap <F6> :TODOToggle<CR>
 
+" auto sets project folder +
 Plug 'https://github.com/airblade/vim-rooter'
+
+" auto generating jsdoc comments
+" Move cursor on function keyword line.
+" Type :JsDoc to insert JSDoc.
+" Insert JSDoc above the function keyword line.
+Plug 'heavenshell/vim-jsdoc'
+
 
 
 " Async linting and other tasks
@@ -134,7 +156,7 @@ let g:ale_linters = {
 \}
 
 "Plug 'flowtype/vim-flow', { 'for': ['javascript', 'jsx'] }
-
+Plug '1995eaton/vim-better-javascript-completion'
 Plug 'honza/vim-snippets'
 " autocomlpete using deoplete +
 if has('nvim')
@@ -142,17 +164,27 @@ if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
   let g:deoplete#enable_ignore_case=1
   let g:deoplete#enable_smart_case=1
-
   Plug 'carlitux/deoplete-ternjs', { 'do': 'npm install -g tern' }
 else
   Plug 'https://github.com/Shougo/neocomplete.vim'
+  let g:neocomplete#enable_at_startup = 1
+  let g:neocomplete#enable_smart_case = 1
+  "let g:neocomplete#sources#omni#functions.javascript = [
+        "\   'jspc#omni',
+        "\   'tern#Complete',
+        "\ ]
+    autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
+    autocmd FileType html,markdown setlocal omnifunc=htmlcomplete#CompleteTags
+    autocmd FileType javascript setlocal omnifunc=javascriptcomplete#CompleteJS
+    autocmd FileType python setlocal omnifunc=pythoncomplete#Complete
+    autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
 endif
 Plug 'Shougo/neosnippet'
 Plug 'Shougo/neosnippet-snippets'
   " Enable snipMate compatibility feature.
-" let g:neosnippet#enable_snipmate_compatibility = 1
+ let g:neosnippet#enable_snipmate_compatibility = 1
 " " Tell Neosnippet about the other snippets
-" let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
+ let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
 smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
 \ "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
@@ -177,8 +209,10 @@ let g:deoplete#omni_patterns.ruby = ['[^. *\t]\.\w*', '\h\w*::']
 " let g:deoplete#omni_patterns.python = '[^. \t]\.\w*'
 let g:deoplete#omni_patterns.python = ['[^. *\t]\.\h\w*\','\h\w*::']
 let g:deoplete#omni_patterns.python3 = ['[^. *\t]\.\h\w*\','\h\w*::']
-autocmd CmdwinEnter * let b:deoplete_sources = ['buffer']
+"autocmd CmdwinEnter * let b:deoplete_sources = ['buffer']
 
+let g:deoplete#sources = {}
+let g:deoplete#sources['javascript.jsx'] = ['file', 'neosnippet', 'ternjs']
 
 
 
@@ -224,6 +258,7 @@ map <F3> :e .<CR>
 
 " nerd commenter +
 Plug 'scrooloose/nerdcommenter'
+"vim-commentary: gc is an operator to toggle comments; gcc linewise
 Plug 'tpope/vim-commentary'
 " gc to comment out the target of a motion (for example, gcap to comment out a paragraph), 
 " gc in visual mode to comment out the selection, 
@@ -268,13 +303,13 @@ Plug 'ctrlpvim/ctrlp.vim'
   "		  :BookmarkLoad <FILE_PATH>
 
 " Tab for autocomplete +
-" Plug 'ervandew/supertab'
-"     let g:SuperTabDefaultCompletionType = "<c-n>"
+ Plug 'ervandew/supertab'
+     let g:SuperTabDefaultCompletionType = "<c-n>"
 
 
 
 " to enable opening a file in a given line. vim index.html:20
-" Plug 'bogado/file-line'
+ Plug 'bogado/file-line'
 
   " Selections (visual mode)
   "Quickly selecting pairs of brackets or htmx /xml tags
@@ -292,10 +327,6 @@ Plug 'ctrlpvim/ctrlp.vim'
   " quickly select the closest text object  +
   " Plug 'https://github.com/gcmt/wildfire.vim'
   " Press <ENTER> in normal mode to select the closest text object.
-
-" some teoretically useful keys remappings 
-" Plug 'https://github.com/tpope/vim-unimpaired'
-
 
 " indented lines as a text object
 Plug 'michaeljsmith/vim-indent-object'
@@ -316,6 +347,7 @@ Plug 'michaeljsmith/vim-indent-object'
 " Emmet style for html? ??
 Plug 'mattn/emmet-vim'
 
+" color schemes
 Plug 'NLKNguyen/papercolor-theme'
 Plug 'https://github.com/morhetz/gruvbox'
 
@@ -323,21 +355,19 @@ Plug 'https://github.com/morhetz/gruvbox'
 call plug#end()
 
 syntax enable
-"colorscheme PaperColor
+" colorscheme PaperColor
 colorscheme gruvbox
 
 let g:gruvbox_contrast_light='soft'
 "Possible values are soft, medium and hard.
 
-" Makes the background transparent. Leave these out if you're not using a transparent
-" terminal.
-"highlight Normal ctermbg=NONE guibg=NONE
-"highlight NonText ctermbg=NONE guibg=NONE
 
 " This is what sets vim to use 24-bit colors. It will also work for any version of neovim
 " newer than 0.1.4.
-set termguicolors
 
+if has('nvim')
+ set termguicolors
+endif
 
 
 
@@ -363,7 +393,7 @@ let g:rainbow_conf = {
 let g:deoplete#enable_at_startup = 1
 set nobackup
 set noswapfile
-set ruler
+"set ruler
 " ### Tab controls
 nnoremap <silent> <C-Left> :tabprevious<CR>
 nnoremap <silent> <C-Right> :tabnext<CR>
@@ -385,7 +415,8 @@ nnoremap J :tabprev<CR>
 nnoremap K :tabnext<CR>
 
 
-
+inoremap <DOWN><DOWN> <ESC>
+imap <UP><UP> <ESC>
 nmap я q
 nmap ЯЯ :q!
 nmap шя wq
@@ -393,7 +424,11 @@ nmap и i
 nmap п p
 nmap в v
 
+" source $MYVIMRC reloads the saved $MYVIMRC
+:nmap <Leader>s :source $MYVIMRC
 
+" opens $MYVIMRC for editing, or use :tabedit $MYVIMRC
+:nmap <Leader>v :e $MYVIMRC
 
 
 
